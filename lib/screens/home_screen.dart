@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:bai5_flutter/screens/product_detail_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:image_picker/image_picker.dart';
@@ -17,16 +18,15 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final List<Product> products = [];
-  final ImagePicker _picker = ImagePicker(); // khởi tạo instance của imagepicker
-  String? _selectedImagePath; // biến lưu đường dẫn ảnh chọn từ thiết bị
+  final ImagePicker _picker = ImagePicker();
+  String? _selectedImagePath;
 
   @override
   void initState() {
     super.initState();
-    _fetchProducts(); // kéo dữ liệu về
+    _fetchProducts();
   }
 
-  // Fetch products từ Firestore
   Future<void> _fetchProducts() async {
     try {
       final querySnapshot = await FirebaseFirestore.instance.collection('products').get();
@@ -41,27 +41,20 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  // Chọn ảnh từ gallery
   Future<void> _pickImage() async {
     final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
-    // nếu đã chọn ảnh thì set đường dẫn cho biến
     if (pickedFile != null) {
       setState(() {
-        _selectedImagePath = pickedFile.path; // Cập nhật đường dẫn hình ảnh
+        _selectedImagePath = pickedFile.path;
       });
     }
   }
 
-  // Upload ảnh lên Firebase Storage
   Future<String> _uploadImage(File image) async {
     try {
-      String fileName = path.basename(image.path); // Lấy tên file
-      final storageRef = FirebaseStorage.instance.ref().child('products/$fileName'); // Tạo reference
-
-      // Upload ảnh lên Firebase Storage
+      String fileName = path.basename(image.path);
+      final storageRef = FirebaseStorage.instance.ref().child('products/$fileName');
       await storageRef.putFile(image);
-
-      // Lấy URL từ Firebase Storage
       String downloadURL = await storageRef.getDownloadURL();
       return downloadURL;
     } catch (e) {
@@ -70,7 +63,6 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  // Hiển thị dialog thêm sản phẩm
   void _showAddProductDialog() {
     final TextEditingController titleController = TextEditingController();
     final TextEditingController priceController = TextEditingController();
@@ -127,21 +119,18 @@ class _HomePageState extends State<HomePage> {
                     priceController.text.isNotEmpty &&
                     _selectedImagePath != null) {
                   final imageFile = File(_selectedImagePath!);
-
-                  // Upload ảnh lên Firebase Storage
                   String imageUrl = await _uploadImage(imageFile);
 
                   if (imageUrl.isNotEmpty) {
                     final newProduct = Product(
-                      id: '', // ID sẽ được tạo tự động bởi Firestore
+                      id: '', // ID sẽ được tạo tự động
                       title: titleController.text,
                       price: double.parse(priceController.text),
-                      imageUrl: imageUrl, // Lưu URL ảnh
+                      imageUrl: imageUrl, // Lưu URL hình ảnh
                     );
 
-                    // Thêm sản phẩm vào Firestore
                     await FirebaseFirestore.instance.collection('products').add(newProduct.toMap()).then((_) {
-                      _fetchProducts(); // Tải lại danh sách sản phẩm
+                      _fetchProducts();
                       Navigator.of(context).pop();
                     }).catchError((e) {
                       print("Lỗi khi thêm sản phẩm: $e");
@@ -157,6 +146,119 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  void _showEditProductDialog(Product product) {
+    final TextEditingController titleController = TextEditingController(text: product.title);
+    final TextEditingController priceController = TextEditingController(text: product.price.toString());
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Chỉnh Sửa Sản Phẩm'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: titleController,
+                  decoration: const InputDecoration(labelText: 'Tiêu đề'),
+                ),
+                TextField(
+                  controller: priceController,
+                  decoration: const InputDecoration(labelText: 'Giá'),
+                  keyboardType: TextInputType.number,
+                ),
+                ElevatedButton(
+                  onPressed: _pickImage,
+                  child: const Text('Chọn Hình Ảnh'),
+                ),
+                if (_selectedImagePath != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Image.file(
+                      File(_selectedImagePath!),
+                      height: 100,
+                      fit: BoxFit.cover,
+                    ),
+                  )
+                else
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Image.network(
+                      product.imageUrl,
+                      height: 100,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () async {
+                if (titleController.text.isNotEmpty && priceController.text.isNotEmpty) {
+                  String imageUrl;
+
+                  if (_selectedImagePath != null) {
+                    final imageFile = File(_selectedImagePath!);
+                    imageUrl = await _uploadImage(imageFile);
+                  } else {
+                    imageUrl = product.imageUrl; // Giữ nguyên URL nếu không chọn ảnh mới
+                  }
+
+                  final updatedProduct = Product(
+                    id: product.id,
+                    title: titleController.text,
+                    price: double.parse(priceController.text),
+                    imageUrl: imageUrl,
+                  );
+
+                  await FirebaseFirestore.instance.collection('products').doc(product.id).update(updatedProduct.toMap()).then((_) {
+                    _fetchProducts();
+                    Navigator.of(context).pop();
+                  }).catchError((e) {
+                    print("Lỗi khi sửa sản phẩm: $e");
+                  });
+                }
+              },
+              child: const Text('Cập Nhật'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _deleteProduct(String productId) async {
+    final confirmation = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Xóa Sản Phẩm'),
+          content: const Text('Bạn có chắc chắn muốn xóa sản phẩm này?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Hủy'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Xóa'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmation == true) {
+      await FirebaseFirestore.instance.collection('products').doc(productId).delete().then((_) {
+        _fetchProducts();
+      }).catchError((e) {
+        print("Lỗi khi xóa sản phẩm: $e");
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -167,21 +269,45 @@ class _HomePageState extends State<HomePage> {
         padding: const EdgeInsets.all(8.0),
         child: products.isEmpty
             ? const Center(child: CircularProgressIndicator())
-            : StaggeredGridView.countBuilder(
+            :
+        StaggeredGridView.countBuilder(
           crossAxisCount: 2,
           itemCount: products.length,
           itemBuilder: (BuildContext context, int index) {
             final product = products[index];
-            return Card(
-              child: Column(
-                children: [
-                  Image.network(product.imageUrl, fit: BoxFit.cover, height: 100), // Hiển thị từ URL
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Text(product.title, style: const TextStyle(fontWeight: FontWeight.bold)),
+            return GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ProductDetailPage(product: product),
                   ),
-                  Text('\$${product.price}', style: const TextStyle(color: Colors.green)),
-                ],
+                );
+              },
+              child: Card(
+                child: Column(
+                  children: [
+                    Image.network(product.imageUrl, fit: BoxFit.cover, height: 100),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text(product.title, style: const TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                    Text('\$${product.price}', style: const TextStyle(color: Colors.green)),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        TextButton(
+                          onPressed: () => _showEditProductDialog(product),
+                          child: const Text('Sửa'),
+                        ),
+                        TextButton(
+                          onPressed: () => _deleteProduct(product.id),
+                          child: const Text('Xóa', style: TextStyle(color: Colors.red)),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             );
           },
