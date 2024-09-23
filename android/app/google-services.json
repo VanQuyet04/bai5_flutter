@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "739480837991",
+    "project_id": "bai5-flutter",
+    "storage_bucket": "bai5-flutter.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:739480837991:android:fc745299e98692ee70d9c2",
+        "android_client_info": {
+          "package_name": "com.example.bai5_flutter"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDK1VTyugEpdche91E9nci6W1Lcz5fZjUM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
