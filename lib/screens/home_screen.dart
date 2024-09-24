@@ -269,9 +269,8 @@ class _HomePageState extends State<HomePage> {
         padding: const EdgeInsets.all(8.0),
         child: products.isEmpty
             ? const Center(child: CircularProgressIndicator())
-            :
-        StaggeredGridView.countBuilder(
-          crossAxisCount: 2,
+            : StaggeredGridView.countBuilder(
+          crossAxisCount: 2, // 2 cột
           itemCount: products.length,
           itemBuilder: (BuildContext context, int index) {
             final product = products[index];
@@ -290,9 +289,16 @@ class _HomePageState extends State<HomePage> {
                     Image.network(product.imageUrl, fit: BoxFit.cover, height: 100),
                     Padding(
                       padding: const EdgeInsets.all(8.0),
-                      child: Text(product.title, style: const TextStyle(fontWeight: FontWeight.bold)),
+                      child: Text(
+                        product.title,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
                     ),
-                    Text('\$${product.price}', style: const TextStyle(color: Colors.green)),
+                    Text(
+                      '\$${product.price}',
+                      style: const TextStyle(color: Colors.green),
+                    ),
+                    const Spacer(), // Dãn phần nội dung bên trên
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -311,7 +317,9 @@ class _HomePageState extends State<HomePage> {
               ),
             );
           },
-          staggeredTileBuilder: (int index) => const StaggeredTile.fit(1),
+          staggeredTileBuilder: (int index) {
+            return StaggeredTile.count(1, index.isEven ? 1.5 : 1.3); // Cột rộng 1, nhưng chiều cao thay đổi
+          },
           mainAxisSpacing: 4.0,
           crossAxisSpacing: 4.0,
         ),
@@ -322,4 +330,6 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
+
+
 }
