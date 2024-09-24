@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../utils/utils.dart';
 import 'check_out_screen.dart';
 
 class CartPage extends StatelessWidget {
@@ -31,14 +32,20 @@ class CartPage extends StatelessWidget {
               final quantity = cartItem['quantity'];
 
               return FutureBuilder<DocumentSnapshot>(
-                future: FirebaseFirestore.instance.collection('products').doc(productId).get(),
+                future: FirebaseFirestore.instance
+                    .collection('products')
+                    .doc(productId)
+                    .get(),
                 builder: (context, productSnapshot) {
-                  if (productSnapshot.connectionState == ConnectionState.waiting) {
+                  if (productSnapshot.connectionState ==
+                      ConnectionState.waiting) {
                     return const ListTile(title: Text('Đang tải sản phẩm...'));
                   }
 
-                  if (!productSnapshot.hasData || !productSnapshot.data!.exists) {
-                    return const ListTile(title: Text('Không tìm thấy sản phẩm.'));
+                  if (!productSnapshot.hasData ||
+                      !productSnapshot.data!.exists) {
+                    return const ListTile(
+                        title: Text('Không tìm thấy sản phẩm.'));
                   }
 
                   final productData = productSnapshot.data!;
@@ -47,9 +54,11 @@ class CartPage extends StatelessWidget {
                   final productImageUrl = productData['imageUrl'];
 
                   return ListTile(
-                    leading: Image.network(productImageUrl, width: 50, fit: BoxFit.cover),
+                    leading: Image.network(productImageUrl,
+                        width: 50, fit: BoxFit.cover),
                     title: Text(productTitle),
-                    subtitle: Text('Số lượng: $quantity\nGiá: \$${productPrice * quantity}'),
+                    subtitle: Text(
+                        'Số lượng: $quantity\nGiá: \$${productPrice * quantity}'),
                     trailing: IconButton(
                       icon: const Icon(Icons.delete, color: Colors.red),
                       onPressed: () {
@@ -88,7 +97,8 @@ class CartPage extends StatelessWidget {
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Xác nhận xóa'),
-          content: const Text('Bạn có chắc chắn muốn xóa sản phẩm này khỏi giỏ hàng?'),
+          content: const Text(
+              'Bạn có chắc chắn muốn xóa sản phẩm này khỏi giỏ hàng?'),
           actions: <Widget>[
             TextButton(
               child: const Text('Hủy'),
@@ -100,11 +110,13 @@ class CartPage extends StatelessWidget {
               child: const Text('Xóa'),
               onPressed: () async {
                 // Xóa sản phẩm khỏi giỏ hàng
-                await FirebaseFirestore.instance.collection('cart').doc(cartItemId).delete();
+                await FirebaseFirestore.instance
+                    .collection('cart')
+                    .doc(cartItemId)
+                    .delete();
                 Navigator.of(context).pop(); // Đóng hộp thoại
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Đã xóa sản phẩm khỏi giỏ hàng.')),
-                );
+                showCustomSnackBar(
+                    context, 'Đã xóa sản phẩm khỏi giỏ hàng!', Colors.green);
               },
             ),
           ],

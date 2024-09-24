@@ -1,3 +1,4 @@
+import 'package:bai5_flutter/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/product.dart';
@@ -52,7 +53,8 @@ class ProductDetailPage extends StatelessWidget {
               child: ElevatedButton(
                 onPressed: () => _addToCart(context, product),
                 style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
                 ),
                 child: const Text('Add to Cart'),
               ),
@@ -85,27 +87,26 @@ class ProductDetailPage extends StatelessWidget {
         });
 
         // Thông báo cập nhật thành công
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Đã thêm vào giỏ')),
-        );
+        showCustomSnackBar(
+            context, 'Đã thêm vào giỏ !', Colors.green);
+
       } else {
         // Nếu sản phẩm chưa có trong giỏ hàng, thêm mới sản phẩm với quantity = 1
         await cartCollection.add({
           'productId': product.id, // Lưu productId
-          'quantity': 1,           // Mặc định là 1
+          'quantity': 1, // Mặc định là 1
         });
 
         // Thông báo thêm thành công
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Thêm sản phẩm vào giỏ hàng thành công!')),
-        );
+        showCustomSnackBar(
+            context, 'Thêm sản phẩm vào giỏ hàng thành công!', Colors.green);
       }
-    } catch (e) {
+    } catch(e) {
       // Thông báo lỗi
       print("Lỗi khi thêm vào giỏ hàng: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Thêm vào giỏ hàng thất bại!')),
-      );
+      showCustomSnackBar(
+          context, 'Thêm sản phẩm vào giỏ hàng thất bại!', Colors.red);
+    }
     }
   }
-}
+

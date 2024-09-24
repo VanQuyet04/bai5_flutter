@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../utils/utils.dart';
+
 class CheckoutPage extends StatefulWidget {
   final String productId;
   final int quantity;
@@ -16,7 +18,7 @@ class CheckoutPage extends StatefulWidget {
   });
 
   @override
-  _CheckoutPageState createState() => _CheckoutPageState();
+  State<CheckoutPage> createState() => _CheckoutPageState();
 }
 
 class _CheckoutPageState extends State<CheckoutPage> {
@@ -39,9 +41,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
       });
 
       // Hiển thị thông báo thành công và quay lại trang trước
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Đơn hàng đã được thanh toán thành công!')),
-      );
+      showCustomSnackBar(
+          context, 'Đơn hàng đã được thanh toán thành công!', Colors.green);
+
       Navigator.pop(context);
     }
   }
